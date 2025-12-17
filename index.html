@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pick a Song</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+body {
+  margin:0; min-height:100vh;
+  background: linear-gradient(160deg, #1a1a1a, #0f0f0f);
+  display:flex; justify-content:center; align-items:center;
+  color:white; overflow-x:hidden;
+}
+.container { width:100%; max-width:420px; padding:20px; transition:all 0.4s ease; }
+h1 { text-align:center; letter-spacing:3px; margin-bottom:25px; }
+
+.song-card {
+  background: rgba(255,255,255,0.08); backdrop-filter: blur(6px);
+  border-radius:18px; padding:14px; display:flex; align-items:center;
+  margin-bottom:15px; cursor:pointer; transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.song-card:hover { transform: scale(1.05); background: rgba(255,255,255,0.15); }
+.album { width:70px; height:70px; border-radius:12px; object-fit:cover; margin-right:15px; }
+.song-info h2 { margin:0; font-size:16px; }
+.song-info p { margin:4px 0 0; font-size:13px; opacity:0.7; }
+
+/* LETTER SCREEN */
+#letterScreen { display:none; text-align:center; }
+.open-btn {
+  margin-top:20px; padding:12px 28px; border-radius:30px;
+  background: rgba(255,255,255,0.9); color:black; border:none; font-size:14px;
+  cursor:pointer; transition: all 0.3s ease; backdrop-filter: blur(5px);
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
+.open-btn:disabled { cursor:default; opacity:0.5; }
+.open-btn:hover:not(:disabled) { transform:scale(1.05); }
+
+/* LETTER TEXT */
+#letterText {
+  margin-top:20px; background: rgba(255,255,255,0.95); color:black;
+  padding:20px; border-radius:8px; font-family:'Roboto Slab', serif;
+  font-size:16px; line-height:1.6; white-space:pre-wrap;
+  max-height:300px; overflow-y:auto; display:none;
+  user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none;
+  opacity:0; transform:scale(0.9); box-shadow:0 0 30px rgba(0,0,0,0.2);
+  transition: all 0.6s ease;
+}
+#letterText.show { opacity:1; transform:scale(1); }
+
+/* SONG END UI */
+#songEndUI { display:none; margin-top:20px; text-align:center; }
+#songEndUI button {
+  padding:12px 26px; margin:6px; border-radius:25px; border:none; font-size:14px;
+  cursor:pointer; transition: all 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(5px); background: rgba(255,255,255,0.9); color:black;
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
+#songEndUI button:hover { transform: scale(1.1); opacity:1; box-shadow:0 6px 20px rgba(255,255,255,0.4); }
+</style>
+</head>
+<body>
+
+<!-- SONG PICK SCREEN -->
+<div class="container" id="songScreen">
+  <h1>PICK A SONG</h1>
+
+  <div class="song-card" onclick="selectSong(0)">
+    <img src="yellow.jpg" class="album">
+    <div class="song-info"><h2>YELLOW</h2><p>Coldplay</p></div>
+  </div>
+
+  <div class="song-card" onclick="selectSong(1)">
+    <img src="sanctuary.jpg" class="album">
+    <div class="song-info"><h2>SANCTUARY</h2><p>Joji</p></div>
+  </div>
+
+  <div class="song-card" onclick="selectSong(2)">
+    <img src="copilot.jpg" class="album">
+    <div class="song-info"><h2>CO-PILOT</h2><p>Just Hush</p></div>
+  </div>
+</div>
+
+<!-- LETTER SCREEN -->
+<div class="container" id="letterScreen">
+  <div style="text-align:center; margin-bottom:20px;">
+    <img src="envelope.png" alt="Envelope" style="width:80px; cursor:pointer;" id="envelopeIcon" onclick="openLetter()">
+  </div>
+  <button class="open-btn" id="openButton" onclick="openLetter()">OPEN LETTER</button>
+
+  <div id="letterText"></div>
+
+  <div id="songEndUI">
+    <button onclick="replaySong()">REPLAY SONG</button>
+    <button onclick="changeSong()">CHANGE SONG</button>
+  </div>
+</div>
+
+<!-- AUDIO -->
+<audio src="yellow.mp3"></audio>
+<audio src="sanctuary.mp3"></audio>
+<audio src="copilot.mp3"></audio>
+
+<script>
+const audios = document.querySelectorAll("audio");
+let letterContent = "";
+let currentSongIndex = 0;
+let letterOpened = false;
+
+/* LOAD LETTER FILE */
+fetch("letter.txt").then(res=>res.text()).then(text=>letterContent=text);
+
+/* SONG SELECTION */
+function selectSong(index){
+  currentSongIndex=index;
+  audios.forEach((a,i)=>{ a.pause(); a.currentTime=0; if(i===index) a.play(); });
+  document.getElementById("songScreen").style.display="none";
+  document.getElementById("letterScreen").style.display="block";
+
+  const letter=document.getElementById("letterText");
+  letter.style.display="none"; letter.style.opacity=0; letter.style.transform="scale(0.9)"; letter.textContent="";
+  letterOpened=false;
+
+  const btn=document.getElementById("openButton"); btn.disabled=false;
+
+  const songEndUI=document.getElementById("songEndUI");
+  songEndUI.style.display="none";
+}
+
+/* OPEN LETTER WITH DRAMATIC TYPING */
+function openLetter(){
+  if(letterOpened) return;
+  letterOpened=true;
+
+  const letter=document.getElementById("letterText");
+  letter.style.display="block";
+  setTimeout(()=>{ letter.classList.add("show"); },50);
+
+  let i=0;
+  letter.textContent="";
+  function typeChar(){
+    if(i<letterContent.length){
+      letter.textContent+=letterContent.charAt(i);
+      i++;
+      setTimeout(typeChar, 30 + Math.random()*50);
+    }
+  }
+  typeChar();
+
+  document.getElementById("openButton").disabled=true;
+}
+
+/* SONG END DETECTION */
+audios.forEach((audio,index)=>{
+  audio.addEventListener('ended',()=>{
+    if(index===currentSongIndex){
+      const songEndUI=document.getElementById("songEndUI");
+      songEndUI.style.display="block";
+    }
+  });
+});
+
+/* REPLAY SONG */
+function replaySong(){
+  const audio=audios[currentSongIndex];
+  audio.currentTime=0; audio.play();
+
+  const letter=document.getElementById("letterText");
+  letter.style.display="none"; letter.style.opacity=0; letter.style.transform="scale(0.9)";
+  letterOpened=false;
+  document.getElementById("openButton").disabled=false;
+
+  const songEndUI=document.getElementById("songEndUI");
+  songEndUI.style.display="none";
+}
+
+/* CHANGE SONG */
+function changeSong(){
+  audios.forEach(a=>{ a.pause(); a.currentTime=0; });
+  document.getElementById("letterScreen").style.display="none";
+  document.getElementById("songScreen").style.display="block";
+  document.getElementById("songEndUI").style.display="none";
+}
+</script>
+</body>
+</html>
